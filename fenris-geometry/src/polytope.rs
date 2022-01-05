@@ -71,7 +71,7 @@ where
     ///
     /// Note that the vector is **not** normalized.
     pub fn tangent_dir(&self) -> Vector2<T> {
-        self.to().coords - self.from().coords
+        self.to().coords.clone() - self.from().coords.clone()
     }
 
     /// Returns a vector normal to the line segment, in the direction consistent with a
@@ -80,7 +80,7 @@ where
     /// Note that the vector is **not** normalized.
     pub fn normal_dir(&self) -> Vector2<T> {
         let tangent = self.tangent_dir();
-        Vector2::new(tangent.y, -tangent.x)
+        Vector2::new(tangent.y.clone(), -tangent.x.clone())
     }
 
     pub fn length(&self) -> T {
@@ -88,7 +88,7 @@ where
     }
 
     pub fn midpoint(&self) -> Point2<T> {
-        Point2::from((self.from.coords + self.to.coords) / (T::one() + T::one()))
+        Point2::from((self.from.coords.clone() + self.to.coords.clone()) / (T::one() + T::one()))
     }
 
     pub fn intersect_line_parametric(&self, line: &Line2d<T>) -> Option<T> {
@@ -111,7 +111,7 @@ where
     }
 
     pub fn point_from_parameter(&self, t: T) -> Point2<T> {
-        Point2::from(self.from().coords + (self.to() - self.from()) * t)
+        Point2::from(self.from().coords.clone() + (self.to() - self.from()) * t)
     }
 
     /// Computes the intersection of two line segments (if any), but returns the result as a parameter.
@@ -169,15 +169,15 @@ where
 
         if !contained_in_poly {
             for edge in other.edges() {
-                let edge_segment = LineSegment2d::new(*edge.0, *edge.1);
+                let edge_segment = LineSegment2d::new(edge.0.clone(), edge.1.clone());
 
                 if let Some(t) = self.intersect_segment_parametric(&edge_segment) {
-                    if t < *min.get_or_insert(t) {
-                        min = Some(t);
+                    if t < *min.get_or_insert(t.clone()) {
+                        min = Some(t.clone());
                     }
 
-                    if t > *max.get_or_insert(t) {
-                        max = Some(t)
+                    if t > *max.get_or_insert(t.clone()) {
+                        max = Some(t.clone())
                     }
                 }
             }
@@ -194,7 +194,7 @@ where
                 let b = self.to();
                 let d = b - a;
                 debug_assert!(t_min <= t_max);
-                LineSegment2d::new(a + d * t_min, a + d * t_max)
+                LineSegment2d::new(a + d.clone() * t_min, a + d.clone() * t_max)
             })
     }
 }
@@ -267,14 +267,14 @@ where
         // where t = [t1, t2].
 
         let rhs = &other.point - &self.point;
-        let matrix = Matrix2::from_columns(&[self.dir, -other.dir]);
+        let matrix = Matrix2::from_columns(&[self.dir.clone(), -other.dir.clone()]);
 
         // TODO: Rewrite to use LU decomposition?
         matrix
             .try_inverse()
             .map(|inv| inv * rhs)
             // Inverse returns vector, split it up into its components
-            .map(|t| (t.x, t.y))
+            .map(|t| (t.x.clone(), t.y.clone()))
     }
 }
 
@@ -310,7 +310,7 @@ where
 
     /// Returns a line representing the surface of the half plane
     pub fn surface(&self) -> Line2d<T> {
-        let tangent = Vector2::new(self.normal.y, -self.normal.x);
+        let tangent = Vector2::new(self.normal.y.clone(), -self.normal.x.clone());
         Line2d::from_point_and_dir(self.point.clone(), tangent)
     }
 }
@@ -375,10 +375,10 @@ where
         self.edges().filter_map(|(v1, v2)| {
             if v1 != v2 {
                 let edge_dir = v2 - v1;
-                let negative_edge_normal = Vector2::new(-edge_dir.y, edge_dir.x);
+                let negative_edge_normal = Vector2::new(-edge_dir.y.clone(), edge_dir.x.clone());
                 let normalized_negative_edge_normal = Unit::try_new(negative_edge_normal, T::zero())
                     .expect("v1 != v2, so vector can be safely normalized");
-                Some(HalfPlane::from_point_and_normal(*v1, normalized_negative_edge_normal))
+                Some(HalfPlane::from_point_and_normal(v1.clone(), normalized_negative_edge_normal))
             } else {
                 None
             }
@@ -445,10 +445,10 @@ where
         if self.is_point() || other.is_point() {
             unimplemented!()
         } else if self.is_line_segment() {
-            let segment = LineSegment2d::new(self.vertices[0], self.vertices[1]);
+            let segment = LineSegment2d::new(self.vertices[0].clone(), self.vertices[1].clone());
             segment
                 .intersect_polygon(other)
-                .map(|segment| ConvexPolygon::from_vertices(vec![*segment.from(), *segment.to()]))
+                .map(|segment| ConvexPolygon::from_vertices(vec![segment.from().clone(), segment.to().clone()]))
                 .unwrap_or_else(|| ConvexPolygon::from_vertices(Vec::new()))
         } else if other.is_line_segment() {
             other.intersect_polygon(self)
@@ -469,7 +469,7 @@ where
             // iterator in the case that the polygon has no vertices
             .take(self.num_edges().saturating_sub(1))
             .skip(1)
-            .map(move |(a, b)| Triangle([*self.vertices.first().unwrap(), *a, *b]))
+            .map(move |(a, b)| Triangle([self.vertices.first().unwrap().clone(), a.clone(), b.clone()]))
     }
 
     pub fn triangulate_into_vec(&self) -> Vec<Triangle2d<T>> {

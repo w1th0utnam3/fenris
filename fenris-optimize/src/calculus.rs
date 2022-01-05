@@ -181,9 +181,9 @@ where
     for j in 0..in_dim {
         // TODO: Can optimize this a little by simple resetting the element at the end of the iteration
         x_plus.copy_from(x);
-        x_plus[j] += *h;
+        x_plus[j] += h.clone();
         x_minus.copy_from(x);
-        x_minus[j] -= *h;
+        x_minus[j] -= h.clone();
 
         f.eval_into(&mut as_vector_slice_mut(&mut f_plus), &as_vector_slice(&x_plus));
         f.eval_into(&mut as_vector_slice_mut(&mut f_minus), &as_vector_slice(&x_minus));
@@ -192,7 +192,7 @@ where
         let mut column_j = result.column_mut(j);
         column_j += &f_plus;
         column_j -= &f_minus;
-        column_j /= 2.0 * *h;
+        column_j /= 2.0 * h.clone();
     }
 
     result
@@ -247,12 +247,12 @@ fn approximate_gradient_fd_into_<T>(
 {
     let n = x.len();
     for i in 0..n {
-        let x_i = x[i];
-        x[i] = x_i + h;
+        let x_i = x[i].clone();
+        x[i] = x_i.clone() + h.clone();
         let f_plus = f(DVectorSlice::from(&x));
-        x[i] = x_i - h;
+        x[i] = x_i.clone() - h.clone();
         let f_minus = f(DVectorSlice::from(&x));
-        let df_i = (f_plus - f_minus) / (2.0 * h);
+        let df_i = (f_plus - f_minus) / (2.0 * h.clone());
         df[i] = df_i;
         x[i] = x_i;
     }
@@ -317,16 +317,16 @@ fn approximate_jacobian_fd_into_<T>(
     // Build column by column
     for i in 0..n {
         // df_dxi ~ (f(x + h e_i) - f(x - h e_i)) / (2 h)
-        let xi = x[i];
-        x[i] = xi + h;
+        let xi = x[i].clone();
+        x[i] = xi.clone() + h.clone();
         f(DVectorSlice::from(&x), DVectorSliceMut::from(&mut f_plus));
-        x[i] = xi - h;
+        x[i] = xi.clone() - h.clone();
         f(DVectorSlice::from(&x), DVectorSliceMut::from(&mut f_minus));
-        x[i] = xi;
+        x[i] = xi.clone();
 
         let mut df_dxi = j.column_mut(i);
         df_dxi.copy_from(&f_plus);
         df_dxi -= &f_minus;
-        df_dxi /= 2.0 * h;
+        df_dxi /= 2.0 * h.clone();
     }
 }

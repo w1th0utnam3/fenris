@@ -709,10 +709,10 @@ where
         for (edge_rep, new_vertex_idx) in &vertex_label_map {
             let [a, b] = *edge_rep.indices();
             let vertex_coords = if a == b {
-                self.vertices[a]
+                self.vertices[a].clone()
             } else {
-                let v_a = self.vertices[a];
-                let v_b = self.vertices[b];
+                let v_a = self.vertices[a].clone();
+                let v_b = self.vertices[b].clone();
                 let segment = LineSegment3d::from_end_points([v_a, v_b]);
                 segment.closest_point_to_plane(&half_space.plane())
             };

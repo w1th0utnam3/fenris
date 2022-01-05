@@ -211,14 +211,14 @@ where
         let initial_alphas = [0.0, 1.0, 0.75, 0.5];
         let mut alpha_iter = initial_alphas
             .iter()
-            .copied()
-            .chain(iterate(0.25, |alpha_i| 0.25 * *alpha_i));
+            .cloned()
+            .chain(iterate(0.25, |alpha_i| 0.25 * alpha_i.clone()));
 
         let mut alpha_prev = alpha_iter.next().unwrap();
         let mut alpha = alpha_iter.next().unwrap();
 
         loop {
-            let delta_alpha = alpha - alpha_prev;
+            let delta_alpha = alpha.clone() - alpha_prev;
 
             // We have that x^{k + 1} = x^0 + alpha^k * p,
             // where x^{k+1} is the value of x after taking the step based on the current alpha
@@ -229,7 +229,7 @@ where
             function.eval_into(&mut f, &DVectorSlice::from(&x));
 
             let g = 0.5 * f.magnitude_squared();
-            if g <= (1.0 - c * alpha) * g_initial {
+            if g <= (1.0 - c.clone() * alpha.clone()) * g_initial.clone() {
                 break;
             } else if alpha < alpha_min {
                 return Err(Box::from(format!(
@@ -238,7 +238,7 @@ where
                     alpha, alpha_min
                 )));
             } else {
-                alpha_prev = alpha;
+                alpha_prev = alpha.clone();
                 alpha = alpha_iter.next().unwrap();
             }
         }

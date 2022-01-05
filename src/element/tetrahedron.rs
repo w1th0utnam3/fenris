@@ -42,7 +42,7 @@ where
         }
 
         let mut tet4_vertices = [Point3::origin(); 4];
-        tet4_vertices.copy_from_slice(&tet10_vertices[0..4]);
+        tet4_vertices.clone_from_slice(&tet10_vertices[0..4]);
 
         Some(Tet10Element {
             tet4: Tet4Element::from_vertices(tet4_vertices),

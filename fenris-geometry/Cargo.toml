@@ -9,7 +9,7 @@ edition = "2021"
 
 [dependencies]
 itertools = "0.9"
-nalgebra = "0.28"
+nalgebra = "0.30"
 serde = { version="1.0", features = [ "derive" ] }
 numeric_literals = "0.2.0"
 fenris-nested-vec = { version = "0.0.1", path="../fenris-nested-vec" }

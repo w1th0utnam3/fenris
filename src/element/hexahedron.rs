@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use itertools::Itertools;
 use numeric_literals::replace_float_literals;
 
@@ -159,10 +157,10 @@ pub struct Hex27Element<T: Scalar> {
     vertices: [Point3<T>; 27],
 }
 
-impl<T: Scalar + Copy> Hex27Element<T> {
+impl<T: Scalar> Hex27Element<T> {
     pub fn from_vertices(vertices: [Point3<T>; 27]) -> Self {
         Self {
-            hex8: Hex8Element::from_vertices(vertices[0..8].try_into().unwrap()),
+            hex8: Hex8Element::from_vertices([vertices[0].clone(), vertices[1].clone(), vertices[2].clone(), vertices[3].clone(), vertices[4].clone(), vertices[5].clone(), vertices[6].clone(), vertices[7].clone()]),
             vertices,
         }
     }
@@ -348,7 +346,7 @@ where
             hex_vertices[local_idx] = global_vertices.get(*global_idx)?.clone();
         }
 
-        Some(Hex27Element::from_vertices(hex_vertices))
+        Some(Hex27Element::from_vertices(hex_vertices.clone()))
     }
 }
 
@@ -359,10 +357,10 @@ pub struct Hex20Element<T: Scalar> {
     vertices: [Point3<T>; 20],
 }
 
-impl<T: Scalar + Copy> Hex20Element<T> {
+impl<T: Scalar> Hex20Element<T> {
     pub fn from_vertices(vertices: [Point3<T>; 20]) -> Self {
         Self {
-            hex8: Hex8Element::from_vertices(vertices[0..8].try_into().unwrap()),
+            hex8: Hex8Element::from_vertices([vertices[0].clone(), vertices[1].clone(), vertices[2].clone(), vertices[3].clone(), vertices[4].clone(), vertices[5].clone(), vertices[6].clone(), vertices[7].clone()]),
             vertices,
         }
     }
@@ -576,6 +574,6 @@ where
             hex_vertices[local_idx] = global_vertices.get(*global_idx)?.clone();
         }
 
-        Some(Hex20Element::from_vertices(hex_vertices))
+        Some(Hex20Element::from_vertices(hex_vertices.clone()))
     }
 }

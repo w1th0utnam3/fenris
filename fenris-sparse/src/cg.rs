@@ -119,7 +119,7 @@ where
         approx_residual: DVectorSlice<T>,
     ) -> Result<bool, SolveErrorKind> {
         let r_approx_norm = approx_residual.norm();
-        let converged = r_approx_norm <= self.tol * b_norm;
+        let converged = r_approx_norm <= self.tol.clone() * b_norm;
         Ok(converged)
     }
 }
@@ -390,7 +390,7 @@ where
         if let Err(err) = apply_operator(&mut *r, &self.operator, &x) {
             return Err(SolveError::new(output, OperatorError(err)));
         }
-        r.zip_apply(&b, |Ax_i, b_i| b_i - Ax_i);
+        r.zip_apply(&b, |Ax_i, b_i| *Ax_i = b_i.clone() - Ax_i.clone());
 
         // z = Pr
         if let Err(err) = apply_operator(&mut *z, &self.preconditioner, &*r) {
@@ -416,7 +416,7 @@ where
                 &self.operator,
                 (&x).into(),
                 (&b).into(),
-                b_norm,
+                b_norm.clone(),
                 output.num_iterations,
                 (&*r).into(),
             );
@@ -453,11 +453,11 @@ where
                 });
             }
 
-            let alpha = zTr / pAp;
+            let alpha = zTr.clone() / pAp;
             // x <- x + alpha * p
-            x.zip_apply(&*p, |x_i, p_i| x_i + alpha * p_i);
+            x.zip_apply(&*p, |x_i, p_i| *x_i += alpha.clone() * p_i);
             // r <- r - alpha * Ap
-            r.zip_apply(&*Ap, |r_i, Ap_i| r_i - alpha * Ap_i);
+            r.zip_apply(&*Ap, |r_i, Ap_i| *r_i -= alpha.clone() * Ap_i);
 
             // Number of iterations corresponds to number of updates to the x vector
             output.num_iterations += 1;
@@ -467,10 +467,10 @@ where
                 return Err(SolveError::new(output, PreconditionerError(err)));
             }
             let zTr_next = z.dot(&*r);
-            let beta = zTr_next / zTr;
+            let beta = zTr_next.clone() / zTr.clone();
 
             // p <- z + beta * p
-            p.zip_apply(&*z, |p_i, z_i| z_i + beta * p_i);
+            p.zip_apply(&*z, |p_i, z_i| *p_i = z_i + beta.clone() * p_i.clone());
 
             zTr = zTr_next;
         }

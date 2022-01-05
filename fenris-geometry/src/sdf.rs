@@ -65,10 +65,10 @@ where
     type Dimension = U2;
 
     fn bounding_box(&self) -> AxisAlignedBoundingBox2d<T> {
-        let eps = self.radius * T::from_f64(0.01).unwrap();
+        let eps = self.radius.clone() * T::from_f64(0.01).unwrap();
         AxisAlignedBoundingBox2d::new(
-            self.center - Vector2::repeat(T::one()) * (self.radius + eps),
-            self.center + Vector2::repeat(T::one()) * (self.radius + eps),
+            self.center.clone() - Vector2::repeat(T::one()) * (self.radius.clone() + eps.clone()),
+            self.center.clone() + Vector2::repeat(T::one()) * (self.radius.clone() + eps.clone()),
         )
     }
 }
@@ -78,12 +78,12 @@ where
     T: RealField,
 {
     fn eval(&self, x: &Point2<T>) -> T {
-        let y = x - self.center;
-        y.coords.norm() - self.radius
+        let y = x - self.center.clone();
+        y.coords.norm() - self.radius.clone()
     }
 
     fn gradient(&self, x: &Point2<T>) -> Option<Vector2<T>> {
-        let y = x - self.center;
+        let y = x - self.center.clone();
         let y_norm = y.coords.norm();
 
         if y_norm == T::zero() {
@@ -135,7 +135,7 @@ where
     type Dimension = U2;
 
     fn bounding_box(&self) -> AxisAlignedBoundingBox2d<T> {
-        self.aabb
+        self.aabb.clone()
     }
 }
 
@@ -150,7 +150,7 @@ where
         let d = p.abs() - b;
 
         // TODO: Use d.max() when fixed. See https://github.com/rustsim/nalgebra/issues/620
-        d.sup(&Vector2::zeros()).norm() + T::min(T::zero(), d[d.imax()])
+        d.sup(&Vector2::zeros()).norm() + T::min(T::zero(), d[d.imax()].clone())
     }
 
     #[replace_float_literals(T::from_f64(literal).expect("Literal must fit in T"))]
@@ -161,8 +161,8 @@ where
         let mut gradient = Vector2::zeros();
         for i in 0..2 {
             let mut dx = Vector2::zeros();
-            dx[i] = h;
-            gradient[i] = (self.eval(&(x + dx)) - self.eval(&(x - dx))) / (2.0 * h)
+            dx[i] = h.clone();
+            gradient[i] = (self.eval(&(x + dx.clone())) - self.eval(&(x - dx.clone()))) / (2.0 * h.clone())
         }
         gradient.normalize_mut();
         Some(gradient)

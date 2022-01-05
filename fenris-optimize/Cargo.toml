@@ -8,7 +8,7 @@ repository = "https://github.com/InteractiveComputerGraphics/fenris"
 description = "Optimization functionality used by fenris"
 
 [dependencies]
-nalgebra = { version = "0.28", features = ["compare"] }
+nalgebra = { version = "0.30", features = ["compare"] }
 numeric_literals = "0.2.0"
 itertools = "0.9"
 log = "0.4"

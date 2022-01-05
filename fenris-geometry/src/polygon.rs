@@ -61,7 +61,7 @@ where
 
     fn closest_edge(&self, x: &Point2<T>) -> Option<ClosestEdge<T>> {
         let mut closest_edge_index = None;
-        let mut smallest_squared_dist = T::max_value();
+        let mut smallest_squared_dist = T::max_value().expect("type does not provide a max_value");
 
         self.for_each_edge(|edge_idx, edge| {
             let closest_point_on_edge = edge.closest_point(x);
@@ -77,8 +77,8 @@ where
         // all results *must exist*, otherwise it's an error
         let closest_edge = self.get_edge(closest_edge_index).unwrap();
         let t = closest_edge.closest_point_parametric(x);
-        let pseudonormal = self.pseudonormal_on_edge(closest_edge_index, t).unwrap();
-        let closest_point_on_edge = closest_edge.point_from_parameter(t);
+        let pseudonormal = self.pseudonormal_on_edge(closest_edge_index, t.clone()).unwrap();
+        let closest_point_on_edge = closest_edge.point_from_parameter(t.clone());
         let d = x - &closest_point_on_edge;
         let distance = d.magnitude();
         let sign = d.dot(&pseudonormal).signum();
@@ -107,8 +107,8 @@ where
         }
 
         let mut closest_edges = [0, 0];
-        let mut smallest_squared_dists = [T::max_value(), T::max_value()];
-        let endpoints = [*segment.from(), *segment.to()];
+        let mut smallest_squared_dists = [T::max_value().expect("type does not provide a max_value"), T::max_value().expect("type does not provide a max_value")];
+        let endpoints = [segment.from().clone(), segment.to().clone()];
 
         let mut intersects = false;
 
@@ -133,8 +133,8 @@ where
             // We can unwrap here, because we know that the Polygon has at least one edge
             let closest_edge = self.get_edge(*closest_edge_idx).unwrap();
             let t = closest_edge.closest_point_parametric(endpoint);
-            let pseudonormal = self.pseudonormal_on_edge(*closest_edge_idx, t).unwrap();
-            let closest_point_on_edge = closest_edge.point_from_parameter(t);
+            let pseudonormal = self.pseudonormal_on_edge(*closest_edge_idx, t.clone()).unwrap();
+            let closest_point_on_edge = closest_edge.point_from_parameter(t.clone());
             let sign = (endpoint - closest_point_on_edge).dot(&pseudonormal);
 
             if sign <= T::zero() {
@@ -163,7 +163,7 @@ where
             .map(|segment| {
                 let a = segment.from();
                 let b = segment.to();
-                (b.y - a.y) * (b.x + a.x)
+                (b.y.clone() - a.y.clone()) * (b.x.clone() + a.x.clone())
             })
             .fold(T::zero(), |sum, contrib| sum + contrib);
         two_times_signed_area / 2.0
@@ -254,7 +254,7 @@ where
     fn get_edge(&self, index: usize) -> Option<LineSegment2d<T>> {
         let a = self.vertices.get(index)?;
         let b = self.vertices.get((index + 1) % self.num_vertices())?;
-        Some(LineSegment2d::new(*a, *b))
+        Some(LineSegment2d::new(a.clone(), b.clone()))
     }
 
     #[replace_float_literals(T::from_f64(literal).unwrap())]

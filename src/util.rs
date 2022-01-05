@@ -2,12 +2,8 @@ use itertools::izip;
 use itertools::Itertools;
 use nalgebra::allocator::Allocator;
 use nalgebra::constraint::{DimEq, ShapeConstraint};
-use nalgebra::storage::{ContiguousStorage, Storage, StorageMut};
-use nalgebra::{
-    DMatrixSlice, DVector, DVectorSlice, DefaultAllocator, Dim, DimDiff, DimMin, DimMul, DimName, DimProd, DimSub,
-    Matrix, Matrix3, MatrixSlice, MatrixSliceMut, OMatrix, OVector, Quaternion, RealField, Scalar, SliceStorage,
-    SliceStorageMut, SquareMatrix, UnitQuaternion, Vector, Vector3, U1,
-};
+use nalgebra::storage::{Storage, StorageMut};
+use nalgebra::{DMatrixSlice, DVector, DVectorSlice, DefaultAllocator, Dim, DimDiff, DimMin, DimMul, DimName, DimProd, DimSub, Matrix, Matrix3, MatrixSlice, MatrixSliceMut, OMatrix, OVector, Quaternion, RealField, Scalar, SliceStorage, SliceStorageMut, SquareMatrix, UnitQuaternion, Vector, Vector3, U1, RawStorage, IsContiguous};
 use nalgebra_sparse::{CooMatrix, CsrMatrix};
 use num::Zero;
 use numeric_literals::replace_float_literals;
@@ -57,7 +53,7 @@ where
     C: Dim,
     R2: DimMul<C2>,
     C2: Dim,
-    S: ContiguousStorage<T, R, C>,
+    S: RawStorage<T, R, C> + IsContiguous,
     ShapeConstraint: DimEq<DimProd<R, C>, DimProd<R2, C2>>,
 {
     let (r2, c2) = shape;
@@ -122,7 +118,7 @@ where
     T: RealField,
     D: DimName + DimMin<D, Output = D> + DimSub<U1>,
     DefaultAllocator:
-        Allocator<T, D> + Allocator<T, D, D> + Allocator<T, <D as DimSub<U1>>::Output> + Allocator<(usize, usize), D>,
+        Allocator<T, D> + Allocator<T, D, D> + Allocator<T, <D as DimSub<U1>>::Output> + Allocator<(usize, usize), D> + Allocator<(T, usize), D>,
 {
     let minus_one = T::from_f64(-1.0).unwrap();
     let mut svd = matrix.clone().svd(true, true);
@@ -171,7 +167,7 @@ pub fn apd<T: RealField>(
     let mut q: UnitQuaternion<T> = initial_guess.clone();
 
     let tol_squared = tol * tol;
-    let mut res = T::max_value();
+    let mut res = T::max_value().expect("type does not have a max_value");
     let mut iter = 0;
     while res > tol_squared && iter < max_iter {
         let R = q.to_rotation_matrix();

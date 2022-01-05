@@ -151,10 +151,10 @@ where
 {
     /// Computes the minimal bounding box which encloses both `this` and `other`.
     pub fn enclose(&self, other: &AxisAlignedBoundingBox<T, D>) -> Self {
-        let min = self.min.iter().zip(&other.min).map(|(a, b)| T::min(*a, *b));
+        let min = self.min.iter().zip(&other.min).map(|(a, b)| T::min(a.clone(), b.clone()));
         let min = OVector::<T, D>::from_iterator(min);
 
-        let max = self.max.iter().zip(&other.max).map(|(a, b)| T::max(*a, *b));
+        let max = self.max.iter().zip(&other.max).map(|(a, b)| T::max(a.clone(), b.clone()));
         let max = OVector::<T, D>::from_iterator(max);
 
         AxisAlignedBoundingBox::new(min, max)
@@ -183,8 +183,8 @@ where
 
     pub fn uniformly_scale(&self, scale: T) -> Self {
         Self {
-            min: &self.min * scale,
-            max: &self.max * scale,
+            min: &self.min * scale.clone(),
+            max: &self.max * scale.clone(),
         }
     }
 
@@ -194,7 +194,7 @@ where
 
     pub fn intersects(&self, other: &Self) -> bool {
         for i in 0..D::dim() {
-            if !intervals_intersect([self.min[i], self.max[i]], [other.min[i], other.max[i]]) {
+            if !intervals_intersect([self.min[i].clone(), self.max[i].clone()], [other.min[i].clone(), other.max[i].clone()]) {
                 return false;
             }
         }
@@ -215,8 +215,8 @@ where
     /// ```
     ///
     pub fn grow_uniformly(&self, distance: T) -> Self {
-        let min = self.min().map(|b_i| b_i - distance);
-        let max = self.max().map(|b_i| b_i + distance);
+        let min = self.min().map(|b_i| b_i - distance.clone());
+        let max = self.max().map(|b_i| b_i + distance.clone());
         Self::new(min, max)
     }
 }
@@ -436,14 +436,14 @@ where
         let mut inside = true;
 
         let mut closest_segment = 0;
-        let mut closest_dist2 = T::max_value();
+        let mut closest_dist2 = T::max_value().expect("type does not provide a max_value");
         let mut closest_point = Point2::origin();
 
         // We assume counterclockwise orientation.
         for i in 0..3 {
             let a = &self.0[i];
             let b = &self.0[(i + 1) % 3];
-            let segment = LineSegment2d::new(*a, *b);
+            let segment = LineSegment2d::new(a.clone(), b.clone());
             // Normal point outwards, i.e. towards the "right"
             let normal_dir = segment.normal_dir();
             let projected_point = segment.closest_point(point);
@@ -487,7 +487,7 @@ impl<'a, T: RealField> ConvexPolygon3d<'a, T> for Triangle3d<T> {
     }
 
     fn get_vertex(&self, index: usize) -> Option<OPoint<T, U3>> {
-        self.0.get(index).copied()
+        self.0.get(index).cloned()
     }
 }
 
@@ -624,7 +624,7 @@ where
 
     fn get_face(&self, index: usize) -> Option<Self::Face> {
         let v = &self.vertices;
-        let quad = |i, j, k, l| Some(Quad3d::from_vertices([v[i], v[j], v[k], v[l]]));
+        let quad = |i: usize, j: usize, k: usize, l: usize| Some(Quad3d::from_vertices([v[i].clone(), v[j].clone(), v[k].clone(), v[l].clone()]));
 
         // Must choose faces carefully so that they point towards the interior
         match index {
@@ -674,8 +674,8 @@ where
     T: RealField,
 {
     pub fn contains_point(&self, point: &Point3<T>) -> bool {
-        let x = point.coords;
-        let x0 = self.point.coords;
+        let x = &point.coords;
+        let x0 = &self.point.coords;
         self.normal.dot(&(x - x0)) >= T::zero()
     }
 
@@ -684,7 +684,7 @@ where
     }
 
     pub fn plane(&self) -> Plane3d<T> {
-        Plane3d::from_point_and_normal(self.point, self.normal)
+        Plane3d::from_point_and_normal(self.point.clone(), self.normal.clone())
     }
 }
 
@@ -724,17 +724,17 @@ impl<T: Scalar> LineSegment3d<T> {
 
 impl<T: RealField> LineSegment3d<T> {
     pub fn project_point_parametric(&self, point: &Point3<T>) -> T {
-        let a = self.end_points[0].coords;
-        let b = self.end_points[1].coords;
-        let d = &b - &a;
+        let a = &self.end_points[0].coords;
+        let b = &self.end_points[1].coords;
+        let d = b - a;
         let d2 = d.magnitude_squared();
         if d2 == T::zero() {
             // If the endpoints are the same, the segment collapses to a single point,
             // in which case e.g. t == 0 gives the correct solution.
             T::zero()
         } else {
-            let x = point.coords;
-            let t = (x - &a).dot(&d) / d2;
+            let x = &point.coords;
+            let t = (x - a).dot(&d) / d2;
             t
         }
     }
@@ -742,18 +742,18 @@ impl<T: RealField> LineSegment3d<T> {
     pub fn project_point(&self, point: &Point3<T>) -> Point3<T> {
         let t = self.project_point_parametric(point);
         if t <= T::zero() {
-            self.end_points[0]
+            self.end_points[0].clone()
         } else if t >= T::one() {
-            self.end_points[1]
+            self.end_points[1].clone()
         } else {
             self.point_from_parameter(t)
         }
     }
 
     pub fn point_from_parameter(&self, t: T) -> Point3<T> {
-        let a = self.end_points[0];
-        let b = self.end_points[1];
-        Point3::from(a.coords * (T::one() - t) + &b.coords * t)
+        let a = &self.end_points[0];
+        let b = &self.end_points[1];
+        Point3::from(&a.coords * (T::one() - t.clone()) + &b.coords * t.clone())
     }
 
     #[allow(non_snake_case)]
@@ -771,9 +771,9 @@ impl<T: RealField> LineSegment3d<T> {
         //  dot(n, d) * t = dot(n, y)
         // but we must be careful, since dot(n, d) can get arbitrarily close to 0,
         // which causes some challenges.
-        let t = if nTd.signum() == nTy.signum() {
+        let t = if nTd.clone().signum() == nTy.clone().signum() {
             // Sign is the same, thus t >= 0
-            if nTy.abs() >= nTd.abs() {
+            if nTy.clone().abs() >= nTd.clone().abs() {
                 T::one()
             } else {
                 nTy / nTd
@@ -900,10 +900,10 @@ pub trait ConvexPolygon3d<'a, T: Scalar>: Debug {
             // Pick any point in the polygon plane
             let x0 = self.get_vertex(0).unwrap();
             let signed_plane_distance = n.dot(&(point - x0));
-            let projected_point = point - &n * signed_plane_distance;
+            let projected_point = point - &n * signed_plane_distance.clone();
             PolygonPointProjection3d {
                 projected_point,
-                signed_plane_distance,
+                signed_plane_distance: signed_plane_distance.clone(),
                 // the projected point is equal to the projection onto the plane
                 distance: signed_plane_distance.abs(),
             }
@@ -911,7 +911,7 @@ pub trait ConvexPolygon3d<'a, T: Scalar>: Debug {
             // Point is *not* contained inside the extruded prism. Thus we must pick the
             // closest point on any of the edges of the polygon.
 
-            let mut closest_dist2 = T::max_value();
+            let mut closest_dist2 = T::max_value().expect("type does not provide a max_value");
             let mut closest_point = Point3::origin();
 
             for i in 0..self.num_vertices() {
@@ -950,7 +950,7 @@ pub trait ConvexPolyhedron<'a, T: Scalar>: Debug {
     {
         assert!(self.num_faces() >= 4, "Polyhedron must have at least 4 faces.");
         let mut inside = true;
-        let mut closest_dist = T::max_value();
+        let mut closest_dist = T::max_value().expect("type does not provide a max_value");
         let mut closest_point = Point3::origin();
         let mut closest_face_index = 0;
 
@@ -1103,7 +1103,7 @@ where
 
     fn get_face(&self, index: usize) -> Option<Self::Face> {
         let v = &self.vertices;
-        let tri = |i, j, k| Some(Triangle([v[i], v[j], v[k]]));
+        let tri = |i: usize, j: usize, k: usize| Some(Triangle([v[i].clone(), v[j].clone(), v[k].clone()]));
 
         // Must choose faces carefully so that they point towards the interior
         match index {
@@ -1121,7 +1121,7 @@ where
     T: RealField,
 {
     fn distance(&self, point: &OPoint<T, U3>) -> T {
-        let triangle = |i, j, k| Triangle([self.vertices[i], self.vertices[j], self.vertices[k]]);
+        let triangle = |i:usize, j:usize, k:usize| Triangle([self.vertices[i].clone(), self.vertices[j].clone(), self.vertices[k].clone()]);
 
         let tri_faces = [
             // We must carefully choose the ordering of vertices so that the
@@ -1133,7 +1133,7 @@ where
         ];
 
         let mut point_inside = true;
-        let mut min_dist = T::max_value();
+        let mut min_dist = T::max_value().expect("type does not provide a max_value");
 
         for tri_face in &tri_faces {
             // Remember that the triangles are oriented such that *outwards* is the positive
@@ -1187,12 +1187,12 @@ where
     /// Returns the index of a concave corner of the quadrilateral, if there is any.
     pub fn concave_corner(&self) -> Option<usize> {
         for i in 0..4 {
-            let x_next = self.0[(i + 2) % 4];
-            let x_curr = self.0[(i + 1) % 4];
-            let x_prev = self.0[(i + 1) % 4];
+            let x_next = self.0[(i + 2) % 4].clone();
+            let x_curr = self.0[(i + 1) % 4].clone();
+            let x_prev = self.0[(i + 1) % 4].clone();
 
-            let a = x_next - x_curr;
-            let b = x_prev - x_curr;
+            let a = &x_next - &x_curr;
+            let b = &x_prev - &x_curr;
             // perp gives "2d cross product", which when negative means that the interior angle
             // is creater than 180 degrees, and so the corner must be concave
             if a.perp(&b) < T::zero() {
@@ -1224,15 +1224,15 @@ where
 
     pub fn split_into_triangles(&self) -> (Triangle2d<T>, Triangle2d<T>) {
         let (conn1, conn2) = self.split_into_triangle_connectivities();
-        let mut vertices1 = [Point2::origin(); 3];
-        let mut vertices2 = [Point2::origin(); 3];
+        let mut vertices1 = [Point2::origin(),Point2::origin(),Point2::origin()];
+        let mut vertices2 = [Point2::origin(), Point2::origin(),Point2::origin()];
 
         for (v, idx) in izip!(&mut vertices1, &conn1) {
-            *v = self.0[*idx];
+            *v = self.0[*idx].clone();
         }
 
         for (v, idx) in izip!(&mut vertices2, &conn2) {
-            *v = self.0[*idx];
+            *v = self.0[*idx].clone();
         }
 
         let tri1 = Triangle(vertices1);
