@@ -1,11 +1,12 @@
 use numeric_literals::replace_float_literals;
 
 use crate::connectivity::{Tet10Connectivity, Tet20Connectivity, Tet4Connectivity};
-use crate::element::{ElementConnectivity, FiniteElement, FixedNodesReferenceFiniteElement};
+use crate::element::{BoundsForElement, ClosestPoint, ClosestPointInElement, ElementConnectivity, FiniteElement, FixedNodesReferenceFiniteElement};
 use crate::nalgebra::{
     distance, Matrix1x4, Matrix3, Matrix3x4, OMatrix, OPoint, Point3, Scalar, Vector3, U1, U10, U20, U3, U4,
 };
 use crate::Real;
+use fenris_geometry::AxisAlignedBoundingBox;
 use itertools::Itertools;
 
 impl<T> ElementConnectivity<T> for Tet4Connectivity
@@ -588,5 +589,18 @@ where
             .tuple_combinations()
             .map(|(x, y)| distance(x, y))
             .fold(T::zero(), |a, b| a.max(b.clone()))
+    }
+}
+
+impl<T: Real> ClosestPointInElement<T> for Tet4Element<T> {
+    #[allow(non_snake_case)]
+    fn closest_point(&self, _p: &Point3<T>) -> ClosestPoint<T, U3> {
+        unimplemented!();
+    }
+}
+
+impl<T: Real> BoundsForElement<T> for Tet4Element<T> {
+    fn element_bounds(&self) -> AxisAlignedBoundingBox<T, Self::GeometryDim> {
+        AxisAlignedBoundingBox::from_points(self.vertices()).expect("Never fails since we always have > 0 vertices")
     }
 }
